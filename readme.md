@@ -15,7 +15,7 @@ FinPal is a mobile application designed to help students manage their finances e
 ## Technology Stack
 
 ### Frontend
-- React Native / Expo
+- React Native / Expo (SDK 52)
 - React Navigation for routing
 - Context API for state management
 - Axios for API communication
@@ -31,58 +31,73 @@ FinPal is a mobile application designed to help students manage their finances e
 ## Getting Started
 
 ### Prerequisites
-- Node.js (v14 or later)
-- npm or yarn
-- Python 3.11+ (for backend)
-- Expo CLI
+-Node.js (v16 or later)
+-npm or yarn
+-Python 3.11+ (for backend)
+-Expo Go app installed on your mobile device (or Android Studio for emulator)
 
 ### Frontend Setup
 1. Clone the repository
 2. Navigate to the frontend directory
+   
    cd finpal/frontent
+
 3. Install dependencies
-   ```bash
-   npm install
-   ```
-4. Start the application
-   ```bash
-   npm start
-   ```
-5. Use the Expo Go app on your phone to scan the QR code, or press 'a' to open in an Android emulator
+   
+   npm install --legacy-peer-deps
+
+4. Update the API URL in src/config.js to match your local IP address export const API_URL = 'http://YOUR_LOCAL_IP:8000';
+5. Start the application
+   
+   npm expo start
+
+6. Choose one of the following options:
+   Use the Expo Go app on your phone to scan the QR code
+   Press 'a' to open in an Android emulator (requires Android Studio setup)
+   Press 'w' to open in a web browser
+   Press 't' to use tunnel mode if on a restricted network
 
 ### Backend Setup
 1. Navigate to the backend directory
-   ```bash
+   
    cd finpal/backend
-   ```
+
 2. Create a virtual environment
-   ```bash
-    venv\Scripts\activate
-   ```
+   
+   python -m venv venv
+   
+   venv\Scripts\activate
+
 3. Install dependencies
-   ```bash
+
    pip install -r requirements.txt
-   ```
+   
 4. Create a `.env` file with the following content:
-   ```
+
    DATABASE_URL=sqlite:///./finpal.db
    SECRET_KEY=your-secret-key-change-in-production
    ALGORITHM=HS256
    ACCESS_TOKEN_EXPIRE_MINUTES=30
-   ```
+
 5. Start the backend server
-   ```bash
-   uvicorn app.main:app --reload
-   ```
+   
+   uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+   
 
 ## Project Structure
 
 ### Frontend
-```
+
 frontend/
 ├── App.js                # Main application component
 ├── package.json          # Project dependencies
 ├── src/
+│   ├── components/       # Reusable UI components
+│   │   ├── Button.js
+│   │   ├── Card.js
+│   │   ├── EmptyState.js
+│   │   ├── InputField.js
+│   │   └── LoadingScreen.js
 │   ├── context/          # React Context for state management
 │   │   ├── AuthContext.js
 │   │   └── FinanceContext.js
@@ -96,32 +111,45 @@ frontend/
 │   │       ├── AccountDetailScreen.js
 │   │       ├── AccountsScreen.js
 │   │       ├── AddAccountScreen.js
+│   │       ├── AddDebtScreen.js
 │   │       ├── AddExpenseScreen.js
+│   │       ├── AddGoalScreen.js
+│   │       ├── AddIncomeScreen.js
 │   │       ├── DashboardScreen.js
+│   │       ├── DebtsScreen.js
+│   │       ├── EditGoalScreen.js
 │   │       ├── ExpensesScreen.js
+│   │       ├── GoalsScreen.js
+│   │       ├── IncomesScreen.js
 │   │       └── ReportsScreen.js
 │   ├── services/         # API services
 │   │   ├── authService.js
 │   │   └── financeService.js
+│   ├── utils/            # Utility functions
+│   │   ├── dateUtils.js
+│   │   ├── formatCurrency.js
+│   │   └── validators.js
 │   └── config.js         # Configuration variables
-```
 
 ### Backend
-```
 backend/
 ├── app/
 │   ├── __init__.py
 │   ├── main.py           # FastAPI application
 │   ├── database.py       # Database configuration
-│   ├── models/           # Database models
-│   ├── routes/           # API routes
-│   ├── schemas/          # Pydantic schemas
-│   ├── services/         # Business logic
-│   └── ml/               # Machine learning modules
-├── tests/                # Backend tests
+│   ├── models.py         # Database models
+│   ├── schemas.py        # Pydantic schemas
+│   ├── services.py       # Business logic
+│   ├── ml/               # Machine learning modules
+│   │   └── budget_analyzer.py  # AI-powered budget analysis
+│   └── routes/           # API routes
+│       ├── auth.py       # Authentication endpoints
+│       ├── finances.py   # Financial data endpoints
+│       ├── reports.py    # Reporting endpoints
+│       └── users.py      # User management endpoints
 ├── .env                  # Environment variables
+├── finpal.db             # SQLite database
 └── requirements.txt      # Python dependencies
-```
 
 ## Contributing
 
