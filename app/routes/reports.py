@@ -1,3 +1,20 @@
+"""
+Financial Reports Routes
+
+This module handles all routes related to financial reporting and analysis.
+It provides endpoints for generating comprehensive financial reports that include
+spending patterns, budget recommendations, and financial health metrics.
+
+Features:
+- Financial summary generation
+- Spending pattern analysis
+- Budget recommendations
+- Expense breakdown by category
+- Debt overview
+- Savings rate calculation
+- AI-powered insights
+"""
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
@@ -16,6 +33,35 @@ def get_financial_summary(
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    """
+    Generate a comprehensive financial summary report for the current user.
+    
+    This endpoint aggregates financial data and generates insights including:
+    - Total income and expenses
+    - Savings rate calculation
+    - Expense breakdown by category
+    - Debt overview
+    - AI-powered budget recommendations
+    
+    The report uses the budget analyzer to:
+    1. Analyze spending patterns across categories
+    2. Identify spending trends
+    3. Generate personalized recommendations
+    4. Calculate category-specific spending thresholds
+    
+    Args:
+        current_user: The authenticated user object
+        db: Database session
+        
+    Returns:
+        FinancialReport object containing:
+            - total_income: Sum of all income
+            - total_expenses: Sum of all expenses
+            - savings_rate: Percentage of income saved
+            - debt_overview: List of all debts
+            - expense_breakdown: Category-wise expense totals
+            - recommendations: List of budget recommendations
+    """
     # Get user's financial data
     expenses = db.query(models.Expense).filter(models.Expense.user_id == current_user.id).all()
     incomes = db.query(models.Income).filter(models.Income.user_id == current_user.id).all()

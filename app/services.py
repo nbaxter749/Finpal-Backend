@@ -1,3 +1,27 @@
+"""
+Service Layer Module
+
+This module provides business logic and database operations for the application.
+It handles all interactions between the API routes and the database models.
+
+Service Categories:
+- Authentication: Password handling and JWT token management
+- Users: User account management
+- Accounts: Financial account operations
+- Expenses: Expense tracking operations
+- Income: Income tracking operations
+- Debts: Debt management operations
+- Goals: Financial goal operations
+- Financial Analysis: Summary and reporting operations
+
+Features:
+- Password hashing and verification
+- JWT token generation and validation
+- Database CRUD operations
+- Business logic implementation
+- Data aggregation and analysis
+"""
+
 from typing import Optional, List, Dict, Any
 from datetime import datetime, timedelta
 from fastapi import Depends, HTTPException, status
@@ -19,19 +43,59 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 # Password handling
 def verify_password(plain_password, hashed_password):
+    """
+    Verify a password against its hash.
+    
+    Args:
+        plain_password: The password to verify
+        hashed_password: The hash to verify against
+        
+    Returns:
+        bool: True if password matches hash
+    """
     return pwd_context.verify(plain_password, hashed_password)
 
 def get_password_hash(password):
+    """
+    Generate a password hash.
+    
+    Args:
+        password: The password to hash
+        
+    Returns:
+        str: The hashed password
+    """
     return pwd_context.hash(password)
 
 # User authentication
 def authenticate_user(db: Session, email: str, password: str):
+    """
+    Authenticate a user by email and password.
+    
+    Args:
+        db: Database session
+        email: User's email
+        password: User's password
+        
+    Returns:
+        User: The authenticated user or False if authentication fails
+    """
     user = get_user_by_email(db, email)
     if not user or not verify_password(password, user.hashed_password):
         return False
     return user
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
+    """
+    Create a JWT access token.
+    
+    Args:
+        data: Data to encode in the token
+        expires_delta: Optional custom expiration time
+        
+    Returns:
+        str: The encoded JWT token
+    """
     to_encode = data.copy()
     expire = datetime.utcnow() + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
     to_encode.update({"exp": expire})
@@ -39,6 +103,19 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     return encoded_jwt
 
 def get_current_user(db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)):
+    """
+    Get the current authenticated user from a JWT token.
+    
+    Args:
+        db: Database session
+        token: JWT token
+        
+    Returns:
+        User: The current user
+        
+    Raises:
+        HTTPException: If token is invalid or user not found
+    """
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -59,12 +136,42 @@ def get_current_user(db: Session = Depends(get_db), token: str = Depends(oauth2_
 
 # User services
 def get_user_by_email(db: Session, email: str):
+    """
+    Get a user by email address.
+    
+    Args:
+        db: Database session
+        email: User's email
+        
+    Returns:
+        User: The user or None if not found
+    """
     return db.query(models.User).filter(models.User.email == email).first()
 
 def get_user_by_id(db: Session, user_id: int):
+    """
+    Get a user by ID.
+    
+    Args:
+        db: Database session
+        user_id: User's ID
+        
+    Returns:
+        User: The user or None if not found
+    """
     return db.query(models.User).filter(models.User.id == user_id).first()
 
 def create_user(db: Session, user: schemas.UserCreate):
+    """
+    Create a new user.
+    
+    Args:
+        db: Database session
+        user: User creation data
+        
+    Returns:
+        User: The created user
+    """
     hashed_password = get_password_hash(user.password)
     db_user = models.User(
         email=user.email,
@@ -79,15 +186,47 @@ def create_user(db: Session, user: schemas.UserCreate):
 
 # Account services
 def get_accounts(db: Session, user_id: int):
+    """
+    Get all accounts for a user.
+    
+    Args:
+        db: Database session
+        user_id: User's ID
+        
+    Returns:
+        List[Account]: List of user's accounts
+    """
     return db.query(models.Account).filter(models.Account.user_id == user_id).all()
 
 def get_account(db: Session, account_id: int, user_id: int):
+    """
+    Get a specific account by ID.
+    
+    Args:
+        db: Database session
+        account_id: Account's ID
+        user_id: Owner's user ID
+        
+    Returns:
+        Account: The account or None if not found
+    """
     return db.query(models.Account).filter(
         models.Account.id == account_id,
         models.Account.user_id == user_id
     ).first()
 
 def create_account(db: Session, account: schemas.AccountCreate, user_id: int):
+    """
+    Create a new account.
+    
+    Args:
+        db: Database session
+        account: Account creation data
+        user_id: Owner's user ID
+        
+    Returns:
+        Account: The created account
+    """
     db_account = models.Account(**account.dict(), user_id=user_id)
     db.add(db_account)
     db.commit()
@@ -95,6 +234,18 @@ def create_account(db: Session, account: schemas.AccountCreate, user_id: int):
     return db_account
 
 def update_account(db: Session, account_id: int, account: schemas.AccountCreate, user_id: int):
+    """
+    Update an existing account.
+    
+    Args:
+        db: Database session
+        account_id: Account's ID
+        account: Updated account data
+        user_id: Owner's user ID
+        
+    Returns:
+        Account: The updated account or None if not found
+    """
     db_account = get_account(db, account_id, user_id)
     if not db_account:
         return None
@@ -107,6 +258,17 @@ def update_account(db: Session, account_id: int, account: schemas.AccountCreate,
     return db_account
 
 def delete_account(db: Session, account_id: int, user_id: int):
+    """
+    Delete an account.
+    
+    Args:
+        db: Database session
+        account_id: Account's ID
+        user_id: Owner's user ID
+        
+    Returns:
+        bool: True if deleted, False if not found
+    """
     db_account = get_account(db, account_id, user_id)
     if not db_account:
         return False
@@ -117,9 +279,30 @@ def delete_account(db: Session, account_id: int, user_id: int):
 
 # Expense services
 def get_expenses(db: Session, user_id: int):
+    """
+    Get all expenses for a user.
+    
+    Args:
+        db: Database session
+        user_id: User's ID
+        
+    Returns:
+        List[Expense]: List of user's expenses
+    """
     return db.query(models.Expense).filter(models.Expense.user_id == user_id).all()
 
 def create_expense(db: Session, expense: schemas.ExpenseCreate, user_id: int):
+    """
+    Create a new expense.
+    
+    Args:
+        db: Database session
+        expense: Expense creation data
+        user_id: Owner's user ID
+        
+    Returns:
+        Expense: The created expense
+    """
     db_expense = models.Expense(**expense.dict(), user_id=user_id)
     db.add(db_expense)
     db.commit()
@@ -128,9 +311,30 @@ def create_expense(db: Session, expense: schemas.ExpenseCreate, user_id: int):
 
 # Income services
 def get_incomes(db: Session, user_id: int):
+    """
+    Get all income entries for a user.
+    
+    Args:
+        db: Database session
+        user_id: User's ID
+        
+    Returns:
+        List[Income]: List of user's income entries
+    """
     return db.query(models.Income).filter(models.Income.user_id == user_id).all()
 
 def create_income(db: Session, income: schemas.IncomeCreate, user_id: int):
+    """
+    Create a new income entry.
+    
+    Args:
+        db: Database session
+        income: Income creation data
+        user_id: Owner's user ID
+        
+    Returns:
+        Income: The created income entry
+    """
     db_income = models.Income(**income.dict(), user_id=user_id)
     db.add(db_income)
     db.commit()
@@ -139,9 +343,30 @@ def create_income(db: Session, income: schemas.IncomeCreate, user_id: int):
 
 # Debt services
 def get_debts(db: Session, user_id: int):
+    """
+    Get all debts for a user.
+    
+    Args:
+        db: Database session
+        user_id: User's ID
+        
+    Returns:
+        List[Debt]: List of user's debts
+    """
     return db.query(models.Debt).filter(models.Debt.user_id == user_id).all()
 
 def create_debt(db: Session, debt: schemas.DebtCreate, user_id: int):
+    """
+    Create a new debt.
+    
+    Args:
+        db: Database session
+        debt: Debt creation data
+        user_id: Owner's user ID
+        
+    Returns:
+        Debt: The created debt
+    """
     db_debt = models.Debt(**debt.dict(), user_id=user_id)
     db.add(db_debt)
     db.commit()
@@ -150,9 +375,30 @@ def create_debt(db: Session, debt: schemas.DebtCreate, user_id: int):
 
 # Goal services
 def get_goals(db: Session, user_id: int):
+    """
+    Get all financial goals for a user.
+    
+    Args:
+        db: Database session
+        user_id: User's ID
+        
+    Returns:
+        List[Goal]: List of user's goals
+    """
     return db.query(models.Goal).filter(models.Goal.user_id == user_id).all()
 
 def create_goal(db: Session, goal: schemas.GoalCreate, user_id: int):
+    """
+    Create a new financial goal.
+    
+    Args:
+        db: Database session
+        goal: Goal creation data
+        user_id: Owner's user ID
+        
+    Returns:
+        Goal: The created goal
+    """
     db_goal = models.Goal(**goal.dict(), user_id=user_id)
     db.add(db_goal)
     db.commit()
@@ -160,6 +406,18 @@ def create_goal(db: Session, goal: schemas.GoalCreate, user_id: int):
     return db_goal
 
 def update_goal(db: Session, goal_id: int, goal: schemas.GoalCreate, user_id: int):
+    """
+    Update an existing financial goal.
+    
+    Args:
+        db: Database session
+        goal_id: Goal's ID
+        goal: Updated goal data
+        user_id: Owner's user ID
+        
+    Returns:
+        Goal: The updated goal or None if not found
+    """
     db_goal = db.query(models.Goal).filter(
         models.Goal.id == goal_id,
         models.Goal.user_id == user_id
@@ -177,6 +435,21 @@ def update_goal(db: Session, goal_id: int, goal: schemas.GoalCreate, user_id: in
 
 # Financial analysis services
 def get_financial_summary(db: Session, user_id: int):
+    """
+    Generate a comprehensive financial summary for a user.
+    
+    Args:
+        db: Database session
+        user_id: User's ID
+        
+    Returns:
+        FinancialReport: Financial summary including:
+            - Total income and expenses
+            - Savings rate
+            - Expense breakdown by category
+            - Debt overview
+            - Budget recommendations
+    """
     expenses = get_expenses(db, user_id)
     incomes = get_incomes(db, user_id)
     debts = get_debts(db, user_id)

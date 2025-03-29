@@ -1,3 +1,36 @@
+"""
+Budget Analyzer Module
+
+This module provides AI-powered financial analysis and budgeting recommendations.
+It analyzes spending patterns, identifies trends, and generates personalized
+recommendations based on financial best practices.
+
+Features:
+- Spending pattern analysis
+- Trend identification
+- Category-based spending analysis
+- Personalized budget recommendations
+- Savings rate optimization
+- Debt management guidance
+- Category-specific spending thresholds
+
+Usage:
+```python
+from app.ml.budget_analyzer import analyze_spending_patterns, generate_recommendations
+
+# Analyze spending patterns
+patterns = analyze_spending_patterns(spending_data)
+
+# Generate recommendations
+recommendations = generate_recommendations(
+    patterns,
+    total_income=5000,
+    total_expenses=4000,
+    debts=debts_list
+)
+```
+"""
+
 from typing import List, Dict, Any, Tuple
 import pandas as pd
 import numpy as np
@@ -7,11 +40,24 @@ def analyze_spending_patterns(spending_data: List[Dict[str, Any]]) -> Dict[str, 
     """
     Analyze spending patterns from historical expense data.
     
+    This function processes historical spending data to identify:
+    - Monthly spending averages by category
+    - Spending trends (increasing/decreasing)
+    - Category-wise spending proportions
+    - Overall spending patterns
+    
     Args:
-        spending_data: List of expense dictionaries
+        spending_data: List of expense dictionaries containing:
+            - amount: float
+            - category: str
+            - date: str (YYYY-MM-DD)
+            - description: str
         
     Returns:
-        Dictionary containing spending patterns and insights
+        Dictionary containing:
+            - patterns: Category-wise spending patterns and proportions
+            - trends: Category-wise spending trends
+            - average_spending: Monthly averages by category
     """
     if not spending_data:
         return {
@@ -71,14 +117,26 @@ def generate_recommendations(
     """
     Generate budgeting recommendations based on spending patterns.
     
+    This function analyzes financial data and generates personalized
+    recommendations based on:
+    - 50/30/20 budgeting rule
+    - Category-specific spending thresholds
+    - Debt-to-income ratios
+    - Savings rate optimization
+    
     Args:
         spending_patterns: Output from analyze_spending_patterns
         total_income: Total monthly income
         total_expenses: Total monthly expenses
-        debts: List of debt objects
+        debts: List of debt objects containing:
+            - amount: float
+            - minimum_payment: float
         
     Returns:
-        List of (category, recommended_amount, reason) tuples
+        List of tuples containing:
+            - category: str (category name)
+            - recommended_amount: float (suggested spending amount)
+            - reason: str (explanation of recommendation)
     """
     recommendations = []
     patterns = spending_patterns.get("patterns", {})
