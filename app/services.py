@@ -477,7 +477,7 @@ def get_financial_summary(db: Session, user_id: int):
         "description": expense.description
     } for expense in expenses]
     
-    from app.ml.budget_analyzer import analyze_spending_patterns, generate_recommendations
+    from app.ml.openai_budget_analyzer import analyze_spending_patterns, generate_recommendations
     
     # Analyze spending patterns
     spending_patterns = analyze_spending_patterns(spending_data)

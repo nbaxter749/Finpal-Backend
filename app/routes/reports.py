@@ -24,7 +24,7 @@ import numpy as np
 from app import models, schemas
 from app.routes.auth import get_current_user
 from app.database import get_db
-from app.ml.budget_analyzer import analyze_spending_patterns, generate_recommendations
+from app.ml.openai_budget_analyzer import analyze_finances
 
 router = APIRouter()
 
@@ -90,16 +90,17 @@ def get_financial_summary(
         "description": expense.description
     } for expense in expenses]
     
-    # Analyze spending patterns
-    spending_patterns = analyze_spending_patterns(spending_data)
-    
-    # Generate budget recommendations
-    recommendations = generate_recommendations(
-        spending_patterns, 
-        total_income, 
-        total_expenses, 
+    # Get financial analysis (both spending patterns and recommendations)
+    financial_analysis = analyze_finances(
+        spending_data,
+        total_income,
+        total_expenses,
         debts
     )
+    
+    # Extract spending patterns and recommendations
+    spending_patterns = financial_analysis["spending_patterns"]
+    recommendations_list = financial_analysis["recommendations"]
     
     # Format recommendations
     formatted_recommendations = [
@@ -108,7 +109,22 @@ def get_financial_summary(
             recommended_amount=amount,
             reason=reason
         )
-        for category, amount, reason in recommendations
+        for category, amount, reason in recommendations_list
+    ]
+    
+    # Convert SQLAlchemy Debt objects to Pydantic Debt schemas
+    formatted_debts = [
+        schemas.Debt(
+            id=debt.id,
+            user_id=debt.user_id,
+            name=debt.name,
+            amount=debt.amount,
+            interest_rate=debt.interest_rate,
+            minimum_payment=debt.minimum_payment,
+            due_date=debt.due_date,
+            type=debt.type
+        )
+        for debt in debts
     ]
     
     # Create financial report
@@ -116,7 +132,7 @@ def get_financial_summary(
         total_income=total_income,
         total_expenses=total_expenses,
         savings_rate=savings_rate,
-        debt_overview=debts,
+        debt_overview=formatted_debts,
         expense_breakdown=expense_breakdown,
         recommendations=formatted_recommendations
     )

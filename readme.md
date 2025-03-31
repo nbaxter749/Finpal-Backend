@@ -5,7 +5,7 @@ FinPal is a mobile application designed to help students manage their finances e
 ## Features
 - 🔐 JWT Authentication
 - 💰 Financial Data Management
-- 🤖 AI-Powered Budget Analysis
+- 🤖 AI-Powered Budget Analysis (OpenAI Integration)
 - 📊 Financial Reporting
 - 🔄 Real-time Data Processing
 - 📱 Mobile-First API Design
@@ -15,7 +15,7 @@ FinPal is a mobile application designed to help students manage their finances e
 - **Database**: SQLite with SQLAlchemy ORM
 - **Authentication**: JWT with OAuth2
 - **Data Analysis**: Pandas, NumPy
-- **ML/AI**: Scikit-learn
+- **AI Integration**: OpenAI GPT API
 - **API Documentation**: OpenAPI/Swagger
 
 ## Quick Start
@@ -24,6 +24,7 @@ FinPal is a mobile application designed to help students manage their finances e
 - Python 3.11 or higher
 - pip (Python package manager)
 - Git
+- OpenAI API key (for AI-powered features)
 
 ### Installation
 1. Clone the repository:
@@ -49,7 +50,7 @@ pip install -r requirements.txt
 4. Set up environment variables:
 ```bash
 cp .env.example .env
-# Edit .env with your configuration
+# Edit .env with your configuration including your OpenAI API key
 ```
 
 5. Initialize the database:
@@ -79,7 +80,7 @@ backend/
 │   ├── schemas.py        # Pydantic schemas
 │   ├── services.py       # Business logic
 │   ├── ml/               # Machine learning modules
-│   │   └── budget_analyzer.py  # AI-powered budget analysis
+│   │   └── openai_budget_analyzer.py  # OpenAI-powered budget analysis
 │   └── routes/           # API routes
 │       ├── auth.py       # Authentication endpoints
 │       ├── finances.py   # Financial data endpoints
@@ -107,6 +108,21 @@ backend/
 - `GET /api/reports/financial` - Generate financial report
 - `GET /api/reports/insights` - Get AI-powered insights
 
+## OpenAI Integration
+
+FinPal uses OpenAI's GPT models to provide intelligent financial analysis and personalized recommendations. The integration:
+
+1. Analyzes spending patterns across categories
+2. Identifies trends in financial behavior
+3. Generates tailored budget recommendations
+4. Applies financial best practices (50/30/20 rule, etc.)
+
+To use the OpenAI features:
+1. Obtain an API key from [OpenAI Platform](https://platform.openai.com/)
+2. Add your key to the `.env` file
+3. Ensure sufficient expenses, income, and debt data for meaningful analysis
+
+The system is designed to fall back to basic recommendations if the API is unavailable.
 
 ## Contributing
 
