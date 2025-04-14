@@ -6,25 +6,22 @@ It provides endpoints for generating comprehensive financial reports that includ
 spending patterns, budget recommendations, and financial health metrics.
 
 Features:
-- Financial summary generation
-- Spending pattern analysis
-- Budget recommendations
-- Expense breakdown by category
-- Debt overview
-- Savings rate calculation
-- AI-powered insights
+- Financial summary generation (delegated to service layer)
+- Spending pattern analysis (handled by service layer)
+- Budget recommendations (handled by service layer)
+- Expense breakdown by category (handled by service layer)
+- Debt overview (handled by service layer)
+- Savings rate calculation (handled by service layer)
+- AI-powered insights (handled by service layer)
 """
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
-from datetime import datetime, timedelta
-import pandas as pd
-import numpy as np
 from app import models, schemas
 from app.routes.auth import get_current_user
 from app.database import get_db
-from app.ml.openai_budget_analyzer import analyze_finances
+from app.services import get_financial_summary as service_get_financial_summary
 
 router = APIRouter()
 
@@ -34,107 +31,28 @@ def get_financial_summary(
     db: Session = Depends(get_db)
 ):
     """
-    Generate a comprehensive financial summary report for the current user.
-    
-    This endpoint aggregates financial data and generates insights including:
-    - Total income and expenses
-    - Savings rate calculation
-    - Expense breakdown by category
-    - Debt overview
-    - AI-powered budget recommendations
-    
-    The report uses the budget analyzer to:
-    1. Analyze spending patterns across categories
-    2. Identify spending trends
-    3. Generate personalized recommendations
-    4. Calculate category-specific spending thresholds
+    Generate a comprehensive financial summary report for the current user
+    by calling the financial service.
     
     Args:
-        current_user: The authenticated user object
-        db: Database session
+        current_user: The authenticated user object (from dependency)
+        db: Database session (passed to service)
         
     Returns:
-        FinancialReport object containing:
-            - total_income: Sum of all income
-            - total_expenses: Sum of all expenses
-            - savings_rate: Percentage of income saved
-            - debt_overview: List of all debts
-            - expense_breakdown: Category-wise expense totals
-            - recommendations: List of budget recommendations
+        FinancialReport: A comprehensive financial report including AI insights.
+        
+    Raises:
+        HTTPException: If the report generation fails in the service layer.
     """
-    # Get user's financial data
-    expenses = db.query(models.Expense).filter(models.Expense.user_id == current_user.id).all()
-    incomes = db.query(models.Income).filter(models.Income.user_id == current_user.id).all()
-    debts = db.query(models.Debt).filter(models.Debt.user_id == current_user.id).all()
-    
-    # Calculate totals
-    total_income = sum(income.amount for income in incomes)
-    total_expenses = sum(expense.amount for expense in expenses)
-    
-    # Calculate savings rate
-    savings_rate = 0 if total_income == 0 else ((total_income - total_expenses) / total_income) * 100
-    
-    # Generate expense breakdown by category
-    expense_breakdown = {}
-    for expense in expenses:
-        if expense.category in expense_breakdown:
-            expense_breakdown[expense.category] += expense.amount
-        else:
-            expense_breakdown[expense.category] = expense.amount
-    
-    # Get spending patterns and recommendations
-    spending_data = [{
-        "amount": expense.amount,
-        "category": expense.category,
-        "date": expense.date,
-        "description": expense.description
-    } for expense in expenses]
-    
-    # Get financial analysis (both spending patterns and recommendations)
-    financial_analysis = analyze_finances(
-        spending_data,
-        total_income,
-        total_expenses,
-        debts
-    )
-    
-    # Extract spending patterns and recommendations
-    spending_patterns = financial_analysis["spending_patterns"]
-    recommendations_list = financial_analysis["recommendations"]
-    
-    # Format recommendations
-    formatted_recommendations = [
-        schemas.BudgetRecommendation(
-            category=category,
-            recommended_amount=amount,
-            reason=reason
-        )
-        for category, amount, reason in recommendations_list
-    ]
-    
-    # Convert SQLAlchemy Debt objects to Pydantic Debt schemas
-    formatted_debts = [
-        schemas.Debt(
-            id=debt.id,
-            user_id=debt.user_id,
-            name=debt.name,
-            amount=debt.amount,
-            interest_rate=debt.interest_rate,
-            minimum_payment=debt.minimum_payment,
-            due_date=debt.due_date,
-            type=debt.type
-        )
-        for debt in debts
-    ]
-    
-    # Create financial report
-    financial_report = schemas.FinancialReport(
-        total_income=total_income,
-        total_expenses=total_expenses,
-        savings_rate=savings_rate,
-        debt_overview=formatted_debts,
-        expense_breakdown=expense_breakdown,
-        recommendations=formatted_recommendations
-    )
-    
-    return financial_report
+    # Call the service function to get the financial summary
+    try:
+        financial_report = service_get_financial_summary(db=db, user_id=current_user.id)
+        if financial_report is None:
+            # Handle cases where the service might return None (e.g., user not found, though unlikely here)
+            raise HTTPException(status_code=404, detail="Could not generate report for user")
+        return financial_report
+    except Exception as e:
+        # Catch potential errors during report generation in the service layer
+        # Log the error e
+        print(f"Error generating financial summary: {e}") # Basic logging
+        raise HTTPException(status_code=500, detail="Internal server error while generating financial report")

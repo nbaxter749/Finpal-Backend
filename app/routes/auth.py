@@ -23,88 +23,25 @@ Security:
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from sqlalchemy.orm import Session
-from datetime import datetime, timedelta
+from datetime import timedelta
 from jose import JWTError, jwt
-from passlib.context import CryptContext
-import os
-from dotenv import load_dotenv
 
 from app import schemas, models
 from app.database import get_db
-
-load_dotenv()
+from app.services import (
+    authenticate_user,
+    create_access_token,
+    get_user_by_email,
+    SECRET_KEY,
+    ALGORITHM,
+    ACCESS_TOKEN_EXPIRE_MINUTES
+)
 
 router = APIRouter()
 
-# Security configuration
-SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key")
-ALGORITHM = os.getenv("ALGORITHM", "HS256")
-ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
-# Helper functions
-def verify_password(plain_password, hashed_password):
-    """
-    Verify a plain text password against its hashed version.
-    
-    Args:
-        plain_password: The plain text password to verify
-        hashed_password: The hashed password to check against
-        
-    Returns:
-        bool: True if passwords match, False otherwise
-    """
-    return pwd_context.verify(plain_password, hashed_password)
-
-def get_password_hash(password):
-    """
-    Generate a secure hash of the password.
-    
-    Args:
-        password: The plain text password to hash
-        
-    Returns:
-        str: The hashed password
-    """
-    return pwd_context.hash(password)
-
-def authenticate_user(db: Session, email: str, password: str):
-    """
-    Authenticate a user with email and password.
-    
-    Args:
-        db: Database session
-        email: User's email address
-        password: User's password
-        
-    Returns:
-        User: Authenticated user object or False if authentication fails
-    """
-    user = db.query(models.User).filter(models.User.email == email).first()
-    if not user or not verify_password(password, user.hashed_password):
-        return False
-    return user
-
-def create_access_token(data: dict, expires_delta: timedelta = None):
-    """
-    Create a JWT access token.
-    
-    Args:
-        data: The data to encode in the token
-        expires_delta: Optional expiration time
-        
-    Returns:
-        str: The generated JWT token
-    """
-    to_encode = data.copy()
-    expire = datetime.utcnow() + (expires_delta or timedelta(minutes=15))
-    to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
-
-def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> models.User:
     """
     Get the current authenticated user from the JWT token.
     
@@ -128,16 +65,14 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
         email: str = payload.get("sub")
         if email is None:
             raise credentials_exception
-        token_data = schemas.TokenData(email=email)
     except JWTError:
         raise credentials_exception
     
-    user = db.query(models.User).filter(models.User.email == token_data.email).first()
+    user = get_user_by_email(db, email=email)
     if user is None:
         raise credentials_exception
     return user
 
-# Routes
 @router.post("/token", response_model=schemas.Token)
 def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     """

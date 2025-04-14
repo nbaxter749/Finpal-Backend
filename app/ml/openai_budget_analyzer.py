@@ -15,18 +15,26 @@ Features:
 
 Usage:
 ```python
-from app.ml.openai_budget_analyzer import analyze_spending_patterns, generate_recommendations
+# Import the main analysis function
+from app.ml.openai_budget_analyzer import analyze_finances 
 
-# Analyze spending patterns
-patterns = analyze_spending_patterns(spending_data)
+# Prepare data (example)
+spending_data = [...] 
+total_income = 5000
+total_expenses = 4000
+debts_list = [...] # List of SQLAlchemy Debt objects
 
-# Generate recommendations
-recommendations = generate_recommendations(
-    patterns,
-    total_income=5000,
-    total_expenses=4000,
+# Get the combined financial analysis and recommendations
+analysis_results = analyze_finances(
+    spending_data=spending_data,
+    total_income=total_income,
+    total_expenses=total_expenses,
     debts=debts_list
 )
+
+# Access results
+spending_patterns = analysis_results.get("spending_patterns")
+recommendations = analysis_results.get("recommendations") # List of tuples: (category, amount, reason)
 ```
 """
 
@@ -205,28 +213,28 @@ def analyze_finances(
             ]
         }
 
-# Keep the original functions with minimal changes to maintain backwards compatibility
-def analyze_spending_patterns(spending_data: List[Dict[str, Any]]) -> Dict[str, Any]:
-    """Compatibility wrapper for the original function."""
-    print("Note: Using the combined analyze_finances function instead of separate API calls")
-    # Just return an empty structure - this will be overridden later
-    return {
-        "patterns": {},
-        "trends": {},
-        "average_spending": {}
-    }
-
-def generate_recommendations(
-    spending_patterns: Dict[str, Any],
-    total_income: float,
-    total_expenses: float,
-    debts: List
-) -> List[Tuple[str, float, str]]:
-    """Compatibility wrapper for the original function."""
-    # This function is still called by the reports.py file
-    # but we no longer need to make a second API call
-    # All the work is now done in analyze_finances
-    # We use dummy data here to avoid a second API call
-    return [
-        ("Placeholder", 0, "This will be replaced by the combined analyze_finances function")
-    ] 
+# Remove the obsolete wrapper functions
+# def analyze_spending_patterns(spending_data: List[Dict[str, Any]]) -> Dict[str, Any]:
+#     """Compatibility wrapper for the original function."""
+#     print("Note: Using the combined analyze_finances function instead of separate API calls")
+#     # Just return an empty structure - this will be overridden later
+#     return {
+#         "patterns": {},
+#         "trends": {},
+#         "average_spending": {}
+#     }
+#
+# def generate_recommendations(
+#     spending_patterns: Dict[str, Any],
+#     total_income: float,
+#     total_expenses: float,
+#     debts: List
+# ) -> List[Tuple[str, float, str]]:
+#     """Compatibility wrapper for the original function."""
+#     # This function is still called by the reports.py file
+#     # but we no longer need to make a second API call
+#     # All the work is now done in analyze_finances
+#     # We use dummy data here to avoid a second API call
+#     return [
+#         ("Placeholder", 0, "This will be replaced by the combined analyze_finances function")
+#     ] 

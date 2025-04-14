@@ -22,10 +22,15 @@ from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from typing import List
+import os
+from dotenv import load_dotenv
 
 from app.database import engine, get_db
 from app import models, schemas, services
 from app.routes import auth, users, finances, reports
+
+# Load environment variables
+load_dotenv()
 
 # Create database tables
 models.Base.metadata.create_all(bind=engine)
@@ -36,13 +41,26 @@ app = FastAPI(
     version="0.1.0"
 )
 
-# Configure CORS
+# Configure CORS - Load allowed origins from environment variable
+# Expects a comma-separated string of origins in the .env file
+# Defaults to ["*"] for development if not set
+cors_origins_str = os.getenv("CORS_ALLOWED_ORIGINS", "*")
+allowed_origins = [origin.strip() for origin in cors_origins_str.split(",")]
+
+if "*" in allowed_origins and len(allowed_origins) > 1:
+    print("WARNING: CORS_ALLOWED_ORIGINS contains '*' along with other origins. Allowing all origins.")
+    allowed_origins = ["*"]
+elif cors_origins_str == "*":
+    print("INFO: Allowing all origins for CORS (development setting).")
+else:
+    print(f"INFO: Allowing specific CORS origins: {allowed_origins}")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, replace with your frontend domain
+    allow_origins=allowed_origins, # Use the loaded origins
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["*"], # Allow all standard methods
+    allow_headers=["*"], # Allow all standard headers
 )
 
 # Include routers

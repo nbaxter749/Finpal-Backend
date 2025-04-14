@@ -29,14 +29,25 @@ from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
+import os
+from dotenv import load_dotenv
 
 from app import models, schemas
 from app.database import get_db
 
-# Security configuration
-SECRET_KEY = "your-secret-key-change-in-production"
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+# Load environment variables
+load_dotenv()
+
+# Security configuration - Load from environment variables
+# Ensure these are set securely in your production .env file
+SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-change-in-production")
+ALGORITHM = os.getenv("ALGORITHM", "HS256")
+# Convert expire minutes to int, provide default
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
+
+# Check if the default secret key is being used and print a warning if so
+if SECRET_KEY == "your-secret-key-change-in-production":
+    print("WARNING: Using default SECRET_KEY. Please set a strong secret key in your .env file for production.")
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
@@ -180,6 +191,36 @@ def create_user(db: Session, user: schemas.UserCreate):
         last_name=user.last_name
     )
     db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+    return db_user
+
+def update_user(db: Session, user_id: int, user_update: schemas.UserBase):
+    """
+    Update an existing user's profile information.
+
+    Args:
+        db: Database session
+        user_id: ID of the user to update
+        user_update: Pydantic schema with updated user data (email, first_name, last_name)
+
+    Returns:
+        User: The updated user object or None if not found.
+    """
+    db_user = get_user_by_id(db, user_id=user_id)
+    if not db_user:
+        return None
+
+    # Optional: Add check for email uniqueness if email is changing
+    # existing_user = get_user_by_email(db, email=user_update.email)
+    # if existing_user and existing_user.id != user_id:
+    #     raise HTTPException(status_code=400, detail="Email already registered by another user")
+
+    # Update fields from the UserBase schema
+    db_user.email = user_update.email
+    db_user.first_name = user_update.first_name
+    db_user.last_name = user_update.last_name
+
     db.commit()
     db.refresh(db_user)
     return db_user
@@ -434,40 +475,38 @@ def update_goal(db: Session, goal_id: int, goal: schemas.GoalCreate, user_id: in
     return db_goal
 
 # Financial analysis services
-def get_financial_summary(db: Session, user_id: int):
+def get_financial_summary(db: Session, user_id: int) -> Optional[schemas.FinancialReport]:
     """
-    Generate a comprehensive financial summary for a user.
+    Generate a comprehensive financial summary for a user, including AI analysis.
     
     Args:
         db: Database session
         user_id: User's ID
         
     Returns:
-        FinancialReport: Financial summary including:
-            - Total income and expenses
-            - Savings rate
-            - Expense breakdown by category
-            - Debt overview
-            - Budget recommendations
+        FinancialReport: Financial summary object or None if data retrieval fails.
     """
-    expenses = get_expenses(db, user_id)
-    incomes = get_incomes(db, user_id)
-    debts = get_debts(db, user_id)
-    
+    try:
+        expenses = get_expenses(db, user_id)
+        incomes = get_incomes(db, user_id)
+        debts = get_debts(db, user_id)
+    except Exception as e:
+        print(f"Error fetching financial data for user {user_id}: {e}")
+        return None # Or raise a specific service layer exception
+
     # Calculate totals
     total_income = sum(income.amount for income in incomes)
     total_expenses = sum(expense.amount for expense in expenses)
     
     # Calculate savings rate
-    savings_rate = 0 if total_income == 0 else ((total_income - total_expenses) / total_income) * 100
+    savings_rate = 0
+    if total_income > 0:
+        savings_rate = ((total_income - total_expenses) / total_income) * 100
     
     # Generate expense breakdown by category
     expense_breakdown = {}
     for expense in expenses:
-        if expense.category in expense_breakdown:
-            expense_breakdown[expense.category] += expense.amount
-        else:
-            expense_breakdown[expense.category] = expense.amount
+        expense_breakdown[expense.category] = expense_breakdown.get(expense.category, 0) + expense.amount
     
     # Prepare spending data for analysis
     spending_data = [{
@@ -477,27 +516,47 @@ def get_financial_summary(db: Session, user_id: int):
         "description": expense.description
     } for expense in expenses]
     
-    from app.ml.openai_budget_analyzer import analyze_spending_patterns, generate_recommendations
+    # Import the correct AI analysis function
+    from app.ml.openai_budget_analyzer import analyze_finances
+
+    # Initialize recommendations list
+    formatted_recommendations = []
     
-    # Analyze spending patterns
-    spending_patterns = analyze_spending_patterns(spending_data)
-    
-    # Generate budget recommendations
-    recommendations = generate_recommendations(
-        spending_patterns, 
-        total_income, 
-        total_expenses, 
-        debts
-    )
-    
-    # Format recommendations
-    formatted_recommendations = [
-        schemas.BudgetRecommendation(
-            category=category,
-            recommended_amount=amount,
-            reason=reason
+    # Call the AI analysis function
+    try:
+        financial_analysis = analyze_finances(
+            spending_data,
+            total_income,
+            total_expenses,
+            debts # Pass the list of SQLAlchemy debt models
         )
-        for category, amount, reason in recommendations
+        
+        # Extract and format recommendations from the AI response
+        # The AI function now returns recommendations as [(category, amount, reason)]
+        recommendations_list = financial_analysis.get("recommendations", [])
+        formatted_recommendations = [
+            schemas.BudgetRecommendation(
+                category=category,
+                recommended_amount=amount,
+                reason=reason
+            )
+            for category, amount, reason in recommendations_list
+        ]
+        
+    except Exception as e:
+        print(f"Error during financial analysis for user {user_id}: {e}")
+        # Proceed without AI recommendations if analysis fails
+        # Optionally add a default recommendation or note about the failure
+        formatted_recommendations.append(schemas.BudgetRecommendation(
+            category="General", 
+            recommended_amount=0,
+            reason="AI analysis failed. Unable to provide specific recommendations."
+        ))
+
+    # Convert SQLAlchemy Debt objects to Pydantic Debt schemas for the report
+    formatted_debts = [
+        schemas.Debt.from_orm(debt)
+        for debt in debts
     ]
     
     # Create financial report
@@ -505,7 +564,7 @@ def get_financial_summary(db: Session, user_id: int):
         total_income=total_income,
         total_expenses=total_expenses,
         savings_rate=savings_rate,
-        debt_overview=debts,
+        debt_overview=formatted_debts, # Use formatted Pydantic schemas
         expense_breakdown=expense_breakdown,
         recommendations=formatted_recommendations
     )

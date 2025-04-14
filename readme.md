@@ -92,21 +92,38 @@ backend/
 
 ## API Endpoints
 
-### Authentication
-- `POST /api/auth/register` - Register new user
-- `POST /api/auth/login` - User login
-- `POST /api/auth/refresh` - Refresh access token
+*(Note: All routes require authentication via JWT Bearer token in the Authorization header, except for `/users/` (POST) and `/token`)*
 
-### Financial Management
-- `GET /api/finances/summary` - Get financial summary
-- `POST /api/finances/expenses` - Add new expense
-- `GET /api/finances/expenses` - List expenses
-- `POST /api/finances/incomes` - Add new income
-- `GET /api/finances/incomes` - List incomes
+### Authentication (`/token`)
+- `POST /token`: Login with username (email) and password in form data to receive an access token.
 
-### Reports
-- `GET /api/reports/financial` - Generate financial report
-- `GET /api/reports/insights` - Get AI-powered insights
+### Users (`/users/`)
+- `POST /users/`: Register a new user.
+- `GET /users/me`: Get the current authenticated user's profile.
+- `PUT /users/me`: Update the current authenticated user's profile (email, first name, last name).
+
+### Finances (Accounts, Expenses, Incomes, Debts, Goals)
+- **Accounts (`/accounts/`)**
+  - `POST /accounts/`: Create a new financial account.
+  - `GET /accounts/`: List all financial accounts for the current user.
+  - `GET /accounts/{account_id}`: Get details of a specific account.
+  - `PUT /accounts/{account_id}`: Update details of a specific account.
+  - `DELETE /accounts/{account_id}`: Delete a specific account.
+- **Expenses (`/expenses/`)**
+  - `POST /expenses/`: Add a new expense record.
+  - `GET /expenses/`: List all expense records for the current user.
+- **Incomes (`/incomes/`)**
+  - `POST /incomes/`: Add a new income record.
+  - `GET /incomes/`: List all income records for the current user.
+- **Debts (`/debts/`)**
+  - `POST /debts/`: Add a new debt record.
+  - `GET /debts/`: List all debt records for the current user.
+- **Goals (`/goals/`)**
+  - `POST /goals/`: Create a new financial goal.
+  - `GET /goals/`: List all financial goals for the current user.
+
+### Reports (`/reports/`)
+- `GET /reports/financial_summary`: Generate a comprehensive financial summary report for the current user, including AI-powered insights and recommendations.
 
 ## OpenAI Integration
 

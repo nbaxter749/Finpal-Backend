@@ -4,6 +4,22 @@ from typing import List
 from app import models, schemas
 from app.routes.auth import get_current_user
 from app.database import get_db
+# Import service functions
+from app.services import (
+    create_account as service_create_account,
+    get_accounts as service_get_accounts,
+    get_account as service_get_account,
+    update_account as service_update_account,
+    delete_account as service_delete_account,
+    create_expense as service_create_expense,
+    get_expenses as service_get_expenses,
+    create_income as service_create_income,
+    get_incomes as service_get_incomes,
+    create_debt as service_create_debt,
+    get_debts as service_get_debts,
+    create_goal as service_create_goal,
+    get_goals as service_get_goals
+)
 
 router = APIRouter()
 
@@ -14,19 +30,16 @@ def create_account(
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    db_account = models.Account(**account.dict(), user_id=current_user.id)
-    db.add(db_account)
-    db.commit()
-    db.refresh(db_account)
-    return db_account
+    """Create an account using the account service."""
+    return service_create_account(db=db, account=account, user_id=current_user.id)
 
 @router.get("/accounts/", response_model=List[schemas.Account])
 def read_accounts(
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    accounts = db.query(models.Account).filter(models.Account.user_id == current_user.id).all()
-    return accounts
+    """Read accounts using the account service."""
+    return service_get_accounts(db=db, user_id=current_user.id)
 
 @router.get("/accounts/{account_id}", response_model=schemas.Account)
 def read_account(
@@ -34,14 +47,10 @@ def read_account(
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    account = db.query(models.Account).filter(
-        models.Account.id == account_id,
-        models.Account.user_id == current_user.id
-    ).first()
-    
+    """Read a specific account using the account service."""
+    account = service_get_account(db=db, account_id=account_id, user_id=current_user.id)
     if not account:
         raise HTTPException(status_code=404, detail="Account not found")
-    
     return account
 
 @router.put("/accounts/{account_id}", response_model=schemas.Account)
@@ -51,39 +60,22 @@ def update_account(
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    db_account = db.query(models.Account).filter(
-        models.Account.id == account_id,
-        models.Account.user_id == current_user.id
-    ).first()
-    
-    if not db_account:
+    """Update an account using the account service."""
+    updated_account = service_update_account(db=db, account_id=account_id, account=account, user_id=current_user.id)
+    if not updated_account:
         raise HTTPException(status_code=404, detail="Account not found")
-    
-    for key, value in account.dict().items():
-        setattr(db_account, key, value)
-    
-    db.commit()
-    db.refresh(db_account)
-    
-    return db_account
+    return updated_account
 
-@router.delete("/accounts/{account_id}")
+@router.delete("/accounts/{account_id}", status_code=200)
 def delete_account(
     account_id: int,
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    db_account = db.query(models.Account).filter(
-        models.Account.id == account_id,
-        models.Account.user_id == current_user.id
-    ).first()
-    
-    if not db_account:
+    """Delete an account using the account service."""
+    success = service_delete_account(db=db, account_id=account_id, user_id=current_user.id)
+    if not success:
         raise HTTPException(status_code=404, detail="Account not found")
-    
-    db.delete(db_account)
-    db.commit()
-    
     return {"detail": "Account deleted successfully"}
 
 # Expense routes
@@ -93,19 +85,16 @@ def create_expense(
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    db_expense = models.Expense(**expense.dict(), user_id=current_user.id)
-    db.add(db_expense)
-    db.commit()
-    db.refresh(db_expense)
-    return db_expense
+    """Create an expense using the expense service."""
+    return service_create_expense(db=db, expense=expense, user_id=current_user.id)
 
 @router.get("/expenses/", response_model=List[schemas.Expense])
 def read_expenses(
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    expenses = db.query(models.Expense).filter(models.Expense.user_id == current_user.id).all()
-    return expenses
+    """Read expenses using the expense service."""
+    return service_get_expenses(db=db, user_id=current_user.id)
 
 # Income routes
 @router.post("/incomes/", response_model=schemas.Income)
@@ -114,19 +103,16 @@ def create_income(
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    db_income = models.Income(**income.dict(), user_id=current_user.id)
-    db.add(db_income)
-    db.commit()
-    db.refresh(db_income)
-    return db_income
+    """Create an income entry using the income service."""
+    return service_create_income(db=db, income=income, user_id=current_user.id)
 
 @router.get("/incomes/", response_model=List[schemas.Income])
 def read_incomes(
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    incomes = db.query(models.Income).filter(models.Income.user_id == current_user.id).all()
-    return incomes
+    """Read income entries using the income service."""
+    return service_get_incomes(db=db, user_id=current_user.id)
 
 # Debt routes
 @router.post("/debts/", response_model=schemas.Debt)
@@ -135,19 +121,16 @@ def create_debt(
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    db_debt = models.Debt(**debt.dict(), user_id=current_user.id)
-    db.add(db_debt)
-    db.commit()
-    db.refresh(db_debt)
-    return db_debt
+    """Create a debt entry using the debt service."""
+    return service_create_debt(db=db, debt=debt, user_id=current_user.id)
 
 @router.get("/debts/", response_model=List[schemas.Debt])
 def read_debts(
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    debts = db.query(models.Debt).filter(models.Debt.user_id == current_user.id).all()
-    return debts
+    """Read debt entries using the debt service."""
+    return service_get_debts(db=db, user_id=current_user.id)
 
 # Goal routes
 @router.post("/goals/", response_model=schemas.Goal)
@@ -156,16 +139,13 @@ def create_goal(
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    db_goal = models.Goal(**goal.dict(), user_id=current_user.id)
-    db.add(db_goal)
-    db.commit()
-    db.refresh(db_goal)
-    return db_goal
+    """Create a goal using the goal service."""
+    return service_create_goal(db=db, goal=goal, user_id=current_user.id)
 
 @router.get("/goals/", response_model=List[schemas.Goal])
 def read_goals(
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    goals = db.query(models.Goal).filter(models.Goal.user_id == current_user.id).all()
-    return goals
+    """Read goals using the goal service."""
+    return service_get_goals(db=db, user_id=current_user.id)

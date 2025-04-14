@@ -98,7 +98,7 @@ class Account(AccountBase):
     user_id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # Expense Schemas
 class ExpenseBase(BaseModel):
@@ -136,7 +136,7 @@ class Expense(ExpenseBase):
     user_id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # Income Schemas
 class IncomeBase(BaseModel):
@@ -174,7 +174,7 @@ class Income(IncomeBase):
     user_id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # Debt Schemas
 class DebtBase(BaseModel):
@@ -212,7 +212,7 @@ class Debt(DebtBase):
     user_id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # Goal Schemas
 class GoalBase(BaseModel):
@@ -248,7 +248,7 @@ class Goal(GoalBase):
     user_id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # Token Schemas
 class Token(BaseModel):
