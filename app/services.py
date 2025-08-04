@@ -566,7 +566,12 @@ def get_financial_summary(db: Session, user_id: int) -> Optional[schemas.Financi
         savings_rate=savings_rate,
         debt_overview=formatted_debts, # Use formatted Pydantic schemas
         expense_breakdown=expense_breakdown,
-        recommendations=formatted_recommendations
+        recommendations=formatted_recommendations,
+        forecasting=financial_analysis.get("forecasting", {
+            "month1": {},
+            "month2": {},
+            "month3": {}
+        })
     )
     
     return financial_report

@@ -21,7 +21,7 @@ FinPal is a mobile application designed to help students manage their finances e
 ## Quick Start
 
 ### Prerequisites
-- Python 3.11 or higher
+- Python 3.11 https://www.python.org/downloads/release/python-3110/ 
 - pip (Python package manager)
 - Git
 - OpenAI API key (for AI-powered features)

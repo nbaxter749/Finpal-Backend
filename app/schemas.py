@@ -296,6 +296,7 @@ class FinancialReport(BaseModel):
         debt_overview (List[Debt]): List of all debts
         expense_breakdown (dict): Category-wise expenses
         recommendations (List[BudgetRecommendation]): Budget recommendations
+        forecasting (dict): Expense forecasting for next three months
     """
     total_income: float
     total_expenses: float
@@ -303,3 +304,4 @@ class FinancialReport(BaseModel):
     debt_overview: List[Debt]
     expense_breakdown: dict
     recommendations: List[BudgetRecommendation]
+    forecasting: dict = {}
