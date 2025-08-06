@@ -17,8 +17,12 @@ from app.services import (
     get_incomes as service_get_incomes,
     create_debt as service_create_debt,
     get_debts as service_get_debts,
+    get_debt as service_get_debt,
+    update_debt as service_update_debt,
+    delete_debt as service_delete_debt,
     create_goal as service_create_goal,
-    get_goals as service_get_goals
+    get_goals as service_get_goals,
+    update_goal as service_update_goal
 )
 
 router = APIRouter()
@@ -132,6 +136,43 @@ def read_debts(
     """Read debt entries using the debt service."""
     return service_get_debts(db=db, user_id=current_user.id)
 
+@router.get("/debts/{debt_id}", response_model=schemas.Debt)
+def read_debt(
+    debt_id: int,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Read a specific debt using the debt service."""
+    debt = service_get_debt(db=db, debt_id=debt_id, user_id=current_user.id)
+    if not debt:
+        raise HTTPException(status_code=404, detail="Debt not found")
+    return debt
+
+@router.put("/debts/{debt_id}", response_model=schemas.Debt)
+def update_debt(
+    debt_id: int,
+    debt: schemas.DebtCreate,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Update a debt using the debt service."""
+    updated_debt = service_update_debt(db=db, debt_id=debt_id, debt=debt, user_id=current_user.id)
+    if not updated_debt:
+        raise HTTPException(status_code=404, detail="Debt not found")
+    return updated_debt
+
+@router.delete("/debts/{debt_id}", status_code=200)
+def delete_debt(
+    debt_id: int,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Delete a debt using the debt service."""
+    success = service_delete_debt(db=db, debt_id=debt_id, user_id=current_user.id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Debt not found")
+    return {"detail": "Debt deleted successfully"}
+
 # Goal routes
 @router.post("/goals/", response_model=schemas.Goal)
 def create_goal(
@@ -149,3 +190,16 @@ def read_goals(
 ):
     """Read goals using the goal service."""
     return service_get_goals(db=db, user_id=current_user.id)
+
+@router.put("/goals/{goal_id}", response_model=schemas.Goal)
+def update_goal(
+    goal_id: int,
+    goal: schemas.GoalCreate,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Update a goal using the goal service."""
+    updated_goal = service_update_goal(db=db, goal_id=goal_id, goal=goal, user_id=current_user.id)
+    if not updated_goal:
+        raise HTTPException(status_code=404, detail="Goal not found")
+    return updated_goal

@@ -396,6 +396,23 @@ def get_debts(db: Session, user_id: int):
     """
     return db.query(models.Debt).filter(models.Debt.user_id == user_id).all()
 
+def get_debt(db: Session, debt_id: int, user_id: int):
+    """
+    Get a specific debt for a user.
+    
+    Args:
+        db: Database session
+        debt_id: Debt's ID
+        user_id: User's ID
+        
+    Returns:
+        Debt: The debt or None if not found
+    """
+    return db.query(models.Debt).filter(
+        models.Debt.id == debt_id,
+        models.Debt.user_id == user_id
+    ).first()
+
 def create_debt(db: Session, debt: schemas.DebtCreate, user_id: int):
     """
     Create a new debt.
@@ -413,6 +430,54 @@ def create_debt(db: Session, debt: schemas.DebtCreate, user_id: int):
     db.commit()
     db.refresh(db_debt)
     return db_debt
+
+def update_debt(db: Session, debt_id: int, debt: schemas.DebtCreate, user_id: int):
+    """
+    Update an existing debt.
+    
+    Args:
+        db: Database session
+        debt_id: Debt's ID
+        debt: Updated debt data
+        user_id: Owner's user ID
+        
+    Returns:
+        Debt: The updated debt or None if not found
+    """
+    db_debt = db.query(models.Debt).filter(
+        models.Debt.id == debt_id,
+        models.Debt.user_id == user_id
+    ).first()
+    
+    if not db_debt:
+        return None
+    
+    for key, value in debt.dict().items():
+        setattr(db_debt, key, value)
+    
+    db.commit()
+    db.refresh(db_debt)
+    return db_debt
+
+def delete_debt(db: Session, debt_id: int, user_id: int):
+    """
+    Delete a debt.
+    
+    Args:
+        db: Database session
+        debt_id: Debt's ID
+        user_id: Owner's user ID
+        
+    Returns:
+        bool: True if deleted, False if not found
+    """
+    db_debt = get_debt(db, debt_id, user_id)
+    if not db_debt:
+        return False
+    
+    db.delete(db_debt)
+    db.commit()
+    return True
 
 # Goal services
 def get_goals(db: Session, user_id: int):
