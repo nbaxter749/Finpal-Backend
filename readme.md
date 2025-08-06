@@ -35,8 +35,9 @@ cd finpal/backend
 
 2. Create and activate virtual environment:
 ```bash
+# Create a venv
 python -m venv venv
-# Windows
+# Activate a venv
 venv\Scripts\activate
 # Unix/MacOS
 source venv/bin/activate
