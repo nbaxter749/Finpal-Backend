@@ -103,7 +103,19 @@ def analyze_finances(
         - Use the 50/30/20 rule (50% needs, 30% wants, 20% savings)
         - Housing costs should be below 35% of income
         - Debt payments should be below 20% of income
-        - Tailor recommendations to actual spending habits and needs
+        - Focus on REDUCING unnecessary spending, not increasing it
+        - If someone is spending less than recommended, that's GOOD - don't suggest increasing
+        - Prioritize savings and debt reduction over spending more
+        - Give practical, money-saving advice
+        - If current spending is reasonable, suggest maintaining it
+        - Only suggest increases if current spending is dangerously low for basic needs
+        
+        IMPORTANT: 
+        - If someone is spending £40 on food and it's working for them, DON'T suggest spending £130
+        - If someone is saving money well, praise that behavior
+        - Focus on reducing waste, not increasing spending
+        - Suggest ways to save money, not spend more
+        - Only recommend increases for essential needs that are clearly insufficient
         
         You MUST return your response as a JSON object structured exactly as follows:
         {
