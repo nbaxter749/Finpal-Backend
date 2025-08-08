@@ -1,16 +1,16 @@
 """
-OpenAI Budget Analyzer Module
+OpenAI Budget Analyser Module
 
 This module provides AI-powered financial analysis and budgeting recommendations
-using the OpenAI API. It analyzes spending patterns, identifies trends, and 
-generates personalized recommendations based on financial best practices.
+using the OpenAI API. It analyses spending patterns, identifies trends, and 
+generates personalised recommendations based on financial best practices.
 
 Features:
 - Spending pattern analysis
 - Trend identification
 - Category-based spending analysis
-- Personalized budget recommendations
-- Savings rate optimization
+- Personalised budget recommendations
+- Savings rate optimisation
 - Debt management guidance
 
 Usage:
@@ -95,9 +95,9 @@ def analyze_finances(
     try:
         # System prompt
         system_prompt = (
-            "You are a financial expert. Analyze the spending data and provide:\n"
+            "You are a financial expert. Analyse the spending data and provide:\n"
             "1. Analysis of spending patterns\n"
-            "2. Personalized budget recommendations based on individual spending patterns\n"
+            "2. Personalised budget recommendations based on individual spending patterns\n"
             "3. Expense forecasting for the next 3 months\n\n"
             "Follow these guidelines for recommendations:\n"
             "- Use the 50/30/20 rule (50% needs, 30% wants, 20% savings)\n"
@@ -105,13 +105,13 @@ def analyze_finances(
             "- Debt payments should be below 20% of income\n"
             "- Focus on REDUCING unnecessary spending, not increasing it\n"
             "- If someone is spending less than recommended, that's GOOD - don't suggest increasing\n"
-            "- Prioritize savings and debt reduction over spending more\n"
+            "- Prioritise savings and debt reduction over spending more\n"
             "- Give practical, money-saving advice\n"
             "- If current spending is reasonable, suggest maintaining it\n"
             "- Only suggest increases if current spending is dangerously low for basic needs\n\n"
             "IMPORTANT:\n"
             "- If someone is spending £40 on food and it's working for them, DON'T suggest spending £130\n"
-            "- If someone is saving money well, praise that behavior\n"
+            "- If someone is saving money well, praise that behaviour\n"
             "- Focus on reducing waste, not increasing spending\n"
             "- Suggest ways to save money, not spend more\n"
             "- Only recommend increases for essential needs that are clearly insufficient\n\n"
@@ -164,7 +164,7 @@ def analyze_finances(
         )
 
         user_prompt = (
-            f"Analyze these financial details and provide both spending patterns analysis and budget recommendations:\n\n"
+            f"Analyse these financial details and provide both spending patterns analysis and budget recommendations:\n\n"
             f"Monthly Income: £{total_income}\n"
             f"Monthly Expenses: £{total_expenses}\n\n"
             f"Expenses:\n{formatted_expenses}\n\n"
