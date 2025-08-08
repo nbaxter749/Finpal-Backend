@@ -93,7 +93,7 @@ def analyze_finances(
         debt_info += f"Debt {i+1}: Amount: £{debt.amount}, Monthly Payment: £{debt.minimum_payment}\n"
     
     try:
-        # Build prompts once to ensure printing matches exactly what is sent
+        # System prompt
         system_prompt = (
             "You are a financial expert. Analyze the spending data and provide:\n"
             "1. Analysis of spending patterns\n"
