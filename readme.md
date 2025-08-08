@@ -26,12 +26,7 @@ FinPal is a mobile application designed to help students manage their finances e
 - OpenAI API key (for AI‑powered features)
 
 ### Installation
-1. Clone the repository:
-   ```bash
-   git clone 
-   cd finpal/backend
-   ```
-2. Create and activate a virtual environment:
+1. Create and activate a virtual environment:
    ```bash
    # Create a venv
    python -m venv venv
@@ -49,6 +44,14 @@ FinPal is a mobile application designed to help students manage their finances e
    cp .env.example .env
    # Edit .env with your configuration including your OpenAI API key
    ```
+
+   To use the OpenAI features:
+1. Obtain an API key from `https://platform.openai.com/`
+2. Add your key to the `.env` file
+3. Ensure sufficient expenses, income, and debt data for meaningful analysis
+
+The system is designed to fall back to basic recommendations if the API is unavailable.
+
 5. Initialise the database:
    ```bash
    python -m app.database
@@ -125,13 +128,6 @@ FinPal uses OpenAI's GPT models to provide intelligent financial analysis and pe
 2. Identifies trends in financial behaviour
 3. Generates tailored budget recommendations
 4. Applies financial best practices (50/30/20 rule, etc.)
-
-To use the OpenAI features:
-1. Obtain an API key from `https://platform.openai.com/`
-2. Add your key to the `.env` file
-3. Ensure sufficient expenses, income, and debt data for meaningful analysis
-
-The system is designed to fall back to basic recommendations if the API is unavailable.
 
 ## Contributing
 1. Fork the repository
