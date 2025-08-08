@@ -93,88 +93,87 @@ def analyze_finances(
         debt_info += f"Debt {i+1}: Amount: £{debt.amount}, Monthly Payment: £{debt.minimum_payment}\n"
     
     try:
-        print("PROMPT SENT TO OPENAI:")
-        print("""System prompt: You are a financial expert. Analyze the spending data and provide:
-        1. Analysis of spending patterns
-        2. Personalized budget recommendations based on individual spending patterns
-        3. Expense forecasting for the next 3 months
-        
-        Follow these guidelines for recommendations:
-        - Use the 50/30/20 rule (50% needs, 30% wants, 20% savings)
-        - Housing costs should be below 35% of income
-        - Debt payments should be below 20% of income
-        - Focus on REDUCING unnecessary spending, not increasing it
-        - If someone is spending less than recommended, that's GOOD - don't suggest increasing
-        - Prioritize savings and debt reduction over spending more
-        - Give practical, money-saving advice
-        - If current spending is reasonable, suggest maintaining it
-        - Only suggest increases if current spending is dangerously low for basic needs
-        
-        IMPORTANT: 
-        - If someone is spending £40 on food and it's working for them, DON'T suggest spending £130
-        - If someone is saving money well, praise that behavior
-        - Focus on reducing waste, not increasing spending
-        - Suggest ways to save money, not spend more
-        - Only recommend increases for essential needs that are clearly insufficient
-        
-        You MUST return your response as a JSON object structured exactly as follows:
-        {
-            "spending_patterns": {
-                "patterns": {
-                    "category1": {"proportion": float, "monthly_average": float},
-                    "category2": {"proportion": float, "monthly_average": float}
-                },
-                "trends": {
-                    "category1": {"direction": "increasing|decreasing|stable", "rate": float},
-                    "category2": {"direction": "increasing|decreasing|stable", "rate": float}
-                },
-                "average_spending": {
-                    "category1": float,
-                    "category2": float
-                }
-            },
-            "recommendations": [
-                {
-                    "category": "string",
-                    "recommended_amount": float,
-                    "reason": "string"
-                },
-                {
-                    "category": "string",
-                    "recommended_amount": float,
-                    "reason": "string"
-                }
-            ],
-            "forecasting": {
-                "month1": {
-                    "category1": float,
-                    "category2": float,
-                    "total": float
-                },
-                "month2": {
-                    "category1": float,
-                    "category2": float,
-                    "total": float
-                },
-                "month3": {
-                    "category1": float,
-                    "category2": float,
-                    "total": float
-                }
-            }
-        }
-        """)
-        
-        print(f"""User prompt: Analyze these financial details and provide both spending patterns analysis and budget recommendations:
+        # Build prompts once to ensure printing matches exactly what is sent
+        system_prompt = (
+            "You are a financial expert. Analyze the spending data and provide:\n"
+            "1. Analysis of spending patterns\n"
+            "2. Personalized budget recommendations based on individual spending patterns\n"
+            "3. Expense forecasting for the next 3 months\n\n"
+            "Follow these guidelines for recommendations:\n"
+            "- Use the 50/30/20 rule (50% needs, 30% wants, 20% savings)\n"
+            "- Housing costs should be below 35% of income\n"
+            "- Debt payments should be below 20% of income\n"
+            "- Focus on REDUCING unnecessary spending, not increasing it\n"
+            "- If someone is spending less than recommended, that's GOOD - don't suggest increasing\n"
+            "- Prioritize savings and debt reduction over spending more\n"
+            "- Give practical, money-saving advice\n"
+            "- If current spending is reasonable, suggest maintaining it\n"
+            "- Only suggest increases if current spending is dangerously low for basic needs\n\n"
+            "IMPORTANT:\n"
+            "- If someone is spending £40 on food and it's working for them, DON'T suggest spending £130\n"
+            "- If someone is saving money well, praise that behavior\n"
+            "- Focus on reducing waste, not increasing spending\n"
+            "- Suggest ways to save money, not spend more\n"
+            "- Only recommend increases for essential needs that are clearly insufficient\n\n"
+            "You MUST return your response as a JSON object structured exactly as follows:\n"
+            "{\n"
+            "    \"spending_patterns\": {\n"
+            "        \"patterns\": {\n"
+            "            \"category1\": {\"proportion\": float, \"monthly_average\": float},\n"
+            "            \"category2\": {\"proportion\": float, \"monthly_average\": float}\n"
+            "        },\n"
+            "        \"trends\": {\n"
+            "            \"category1\": {\"direction\": \"increasing|decreasing|stable\", \"rate\": float},\n"
+            "            \"category2\": {\"direction\": \"increasing|decreasing|stable\", \"rate\": float}\n"
+            "        },\n"
+            "        \"average_spending\": {\n"
+            "            \"category1\": float,\n"
+            "            \"category2\": float\n"
+            "        }\n"
+            "    },\n"
+            "    \"recommendations\": [\n"
+            "        {\n"
+            "            \"category\": \"string\",\n"
+            "            \"recommended_amount\": float,\n"
+            "            \"reason\": \"string\"\n"
+            "        },\n"
+            "        {\n"
+            "            \"category\": \"string\",\n"
+            "            \"recommended_amount\": float,\n"
+            "            \"reason\": \"string\"\n"
+            "        }\n"
+            "    ],\n"
+            "    \"forecasting\": {\n"
+            "        \"month1\": {\n"
+            "            \"category1\": float,\n"
+            "            \"category2\": float,\n"
+            "            \"total\": float\n"
+            "        },\n"
+            "        \"month2\": {\n"
+            "            \"category1\": float,\n"
+            "            \"category2\": float,\n"
+            "            \"total\": float\n"
+            "        },\n"
+            "        \"month3\": {\n"
+            "            \"category1\": float,\n"
+            "            \"category2\": float,\n"
+            "            \"total\": float\n"
+            "        }\n"
+            "    }\n"
+            "}"
+        )
 
-        Monthly Income: £{total_income}
-        Monthly Expenses: £{total_expenses}
-        
-        Expenses:
-        {formatted_expenses}
-        
-        Debts:
-        {debt_info}""")
+        user_prompt = (
+            f"Analyze these financial details and provide both spending patterns analysis and budget recommendations:\n\n"
+            f"Monthly Income: £{total_income}\n"
+            f"Monthly Expenses: £{total_expenses}\n\n"
+            f"Expenses:\n{formatted_expenses}\n\n"
+            f"Debts:\n{debt_info}"
+        )
+
+        print("PROMPT SENT TO OPENAI:")
+        print("System prompt:", system_prompt)
+        print("User prompt:", user_prompt)
         
         # Get API key
         api_key = os.getenv("OPENAI_API_KEY")
@@ -190,80 +189,8 @@ def analyze_finances(
         data = {
             "model": "gpt-3.5-turbo",
             "messages": [
-                {
-                    "role": "system", 
-                    "content": """You are a financial expert. Analyze the spending data and provide:
-                    1. Analysis of spending patterns
-                    2. Personalized budget recommendations based on individual spending patterns
-                    3. Expense forecasting for the next 3 months
-                    
-                    Follow these guidelines for recommendations:
-                    - Use the 50/30/20 rule (50% needs, 30% wants, 20% savings)
-                    - Housing costs should be below 35% of income
-                    - Debt payments should be below 20% of income
-                    - Tailor recommendations to actual spending habits and needs
-                    
-                    You MUST return your response as a JSON object structured exactly as follows:
-                    {
-                        "spending_patterns": {
-                            "patterns": {
-                                "category1": {"proportion": float, "monthly_average": float},
-                                "category2": {"proportion": float, "monthly_average": float}
-                            },
-                            "trends": {
-                                "category1": {"direction": "increasing|decreasing|stable", "rate": float},
-                                "category2": {"direction": "increasing|decreasing|stable", "rate": float}
-                            },
-                            "average_spending": {
-                                "category1": float,
-                                "category2": float
-                            }
-                        },
-                        "recommendations": [
-                            {
-                                "category": "string",
-                                "recommended_amount": float,
-                                "reason": "string"
-                            },
-                            {
-                                "category": "string",
-                                "recommended_amount": float,
-                                "reason": "string"
-                            }
-                        ],
-                        "forecasting": {
-                            "month1": {
-                                "category1": float,
-                                "category2": float,
-                                "total": float
-                            },
-                            "month2": {
-                                "category1": float,
-                                "category2": float,
-                                "total": float
-                            },
-                            "month3": {
-                                "category1": float,
-                                "category2": float,
-                                "total": float
-                            }
-                        }
-                    }
-                    """
-                },
-                {
-                    "role": "user",
-                    "content": f"""Analyze these financial details and provide both spending patterns analysis and budget recommendations:
-
-                    Monthly Income: £{total_income}
-                    Monthly Expenses: £{total_expenses}
-                    
-                    Expenses:
-                    {formatted_expenses}
-                    
-                    Debts:
-                    {debt_info}"""
-                }
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
             ],
             "response_format": {"type": "json_object"}
         }
